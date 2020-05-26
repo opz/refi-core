@@ -1,5 +1,7 @@
 require("dotenv").config();
 
+usePlugin("@nomiclabs/buidler-waffle");
+
 function getEnv(env) {
   let value = process.env[env];
 
