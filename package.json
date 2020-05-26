@@ -15,6 +15,7 @@
     "chai": "^4.2.0",
     "dotenv": "^8.2.0",
     "ethereum-waffle": "^2.5.1",
-    "ethers": "^4.0.47"
+    "ethers": "^4.0.47",
+    "solhint": "^3.0.0"
   }
 }
