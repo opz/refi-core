@@ -12,6 +12,14 @@
       "pre-commit": "solhint -w 0 \"contracts/**/*.sol\""
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opz/refi-core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/opz/refi-core/issues"
+  },
+  "homepage": "https://github.com/opz/refi-core#readme",
   "author": "",
   "license": "ISC",
   "devDependencies": {
