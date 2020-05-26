@@ -4,7 +4,10 @@
 
 ## Install Dependencies
 
-`npm install`
+```
+npm install
+git submodule update --init --recursive
+```
 
 ## Compile Contracts
 
