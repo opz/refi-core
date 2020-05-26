@@ -34,5 +34,8 @@
     "husky": "^4.2.5",
     "solhint": "^3.0.0",
     "solidity-coverage": "^0.7.5"
+  },
+  "dependencies": {
+    "@uniswap/lib": "^1.1.2"
   }
 }
