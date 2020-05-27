@@ -40,7 +40,7 @@ contract ReFi {
 
     constructor() public {
         // Set to 5%
-        AAVE_REPAY_EPSILON = FixedPoint.fraction(1, 20);
+        _AAVE_REPAY_EPSILON = FixedPoint.fraction(1, 20);
     }
 
     //----------------------------------------
