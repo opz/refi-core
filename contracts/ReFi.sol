@@ -90,6 +90,21 @@ contract ReFi is Ownable {
     //----------------------------------------
 
     /**
+     * @notice Repay an existing loan on a protocol
+     * @param sender The loanee
+     * @param protocol The protocol to use
+     * @param token The token to repay
+     * @param amount The amount of token to repay
+     */
+    function _repay(address sender, Protocol protocol, address token, uint amount) internal {
+        if (protocol == Protocol.Aave) {
+            _aaveRepay(sender, token, amount);
+        } else { // solhint-disable-line no-empty-blocks
+            // revert
+        }
+    }
+
+    /**
      * @notice Borrow tokens from a protocol
      * @param protocol The protocol to use
      * @param token The token to borrow
