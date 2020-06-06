@@ -13,6 +13,7 @@ import {
 
 import {ILendingPoolAddressesProvider} from "./aave-protocol/ILendingPoolAddressesProvider.sol";
 import {ILendingPool} from "./aave-protocol/ILendingPool.sol";
+import {IPriceOracle} from "./aave-protocol/IPriceOracle.sol";
 
 contract ReFi is Ownable {
     //----------------------------------------
@@ -27,6 +28,7 @@ contract ReFi is Ownable {
         ILendingPoolAddressesProvider provider;
         ILendingPool lendingPool;
         address lendingPoolCore;
+        IPriceOracle priceOracle;
     }
 
     //----------------------------------------
