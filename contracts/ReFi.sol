@@ -128,6 +128,31 @@ contract ReFi is Ownable {
     }
 
     /**
+     * @notice Get the equivalent borrow balance for another token on a protocol
+     * @param protocol The protocol to use
+     * @param fromToken The token with the current balance
+     * @param toToken The token to get an equivalent balance for
+     * @param fromBalance The borrow balance of `fromToken`
+     * @return toBalance The equivalent borrow balance
+     */
+    function _getEquivalentBorrowBalance(
+        Protocol protocol,
+        address fromToken,
+        address toToken,
+        uint fromBalance
+    )
+        internal
+        view
+        returns (uint toBalance)
+    {
+        if (protocol == Protocol.Aave) {
+            toBalance = _getAaveEquivalentBorrowBalance(fromToken, toToken, fromBalance);
+        } else { // solhint-disable-line no-empty-blocks
+            // revert
+        }
+    }
+
+    /**
      * @notice Get the current borrow balance of a reserve for a user on Aave
      * @param reserve The Aave reserve
      * @param user The user
