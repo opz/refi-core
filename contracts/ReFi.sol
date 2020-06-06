@@ -99,6 +99,36 @@ contract ReFi is Ownable {
 
         IERC20(reserve).safeApprove(aaveContracts.lendingPoolCore, amount);
 
-        aaveContracts.lendingPool.repay(reserve, amount, msg.sender);
+        _aaveContracts.lendingPool.repay(reserve, amount, payable(sender));
+    }
+
+    /**
+     * @notice Get the equivalent borrow balance for another Aave reserve
+     * @param fromReserve The reserve with the current balance
+     * @param toReserve The reserve to get an equivalent balance for
+     * @param currentBorrowBalance The borrow balance of `fromReserve`
+     * @return The equivalent borrow balance
+     */
+    function _getAaveEquivalentBorrowBalance(
+        address fromReserve,
+        address toReserve,
+        uint currentBorrowBalance
+    )
+        internal
+        view
+        returns (uint)
+    {
+        uint fromAssetPrice = _aaveContracts.priceOracle.getAssetPrice(fromReserve);
+        require(fromAssetPrice <= _MAX_UINT112, "ReFi/overflow");
+
+        uint toAssetPrice = _aaveContracts.priceOracle.getAssetPrice(toReserve);
+        require(toAssetPrice <= _MAX_UINT112, "ReFi/overflow");
+
+        uint toBorrowBalance = FixedPoint.encode(uint112(currentBorrowBalance))
+            .div(uint112(toAssetPrice))
+            .mul(uint112(fromAssetPrice))
+            .decode144();
+
+        return toBorrowBalance;
     }
 }
