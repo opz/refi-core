@@ -89,10 +89,14 @@ contract ReFi is Ownable {
     // Internal functions
     //----------------------------------------
 
-    function _aaveRepay(AaveContracts memory aaveContracts, address reserve) internal {
-        (, uint currentBorrowBalance, , , , , , , ,) =
-            aaveContracts.lendingPool.getUserReserveData(reserve, msg.sender);
 
+    /**
+     * @notice Repay Aave loan on behalf of sender
+     * @param sender The Aave loanee
+     * @param reserve The Aave reserve to repay
+     * @param currentBorrowBalance The current balance that needs to be repaid
+     */
+    function _aaveRepay(address sender, address reserve, uint currentBorrowBalance) internal {
         require(currentBorrowBalance <= _MAX_UINT112, "ReFi/overflow");
 
         // Repaying slightly higher than the borrowed amount is recommended by Aave
@@ -100,7 +104,7 @@ contract ReFi is Ownable {
         uint amount = currentBorrowBalance
             .add(_AAVE_REPAY_EPSILON.mul(uint112(currentBorrowBalance)).decode144());
 
-        IERC20(reserve).safeApprove(aaveContracts.lendingPoolCore, amount);
+        IERC20(reserve).safeApprove(_aaveContracts.lendingPoolCore, amount);
 
         _aaveContracts.lendingPool.repay(reserve, amount, payable(sender));
     }
