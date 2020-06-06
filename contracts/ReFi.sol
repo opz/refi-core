@@ -90,6 +90,36 @@ contract ReFi is Ownable {
     //----------------------------------------
 
     /**
+     * @notice Initiate a Uniswap flash swap
+     * @dev `uniswapV2Call` is called to complete the swap
+     * @param tokenA The token being borrowed
+     * @param tokenB The token being repaid
+     * @param amountA The amount of `tokenA` to borrow
+     * @param amountB The amount of `tokenB` that will be repaid
+     */
+    function _uniswapFlashSwap(
+        Protocol protocolA,
+        Protocol protocolB,
+        address tokenA,
+        address tokenB,
+        uint amountA,
+        uint amountB
+    ) internal {
+        // Use a WETH pair if the flash swap borrows and repays with the same token
+        if (tokenA == tokenB) tokenB = _uniswapRouter.WETH();
+
+        (address token0, address token1, uint amount0, uint amount1) = tokenA < tokenB
+            ? (tokenA, tokenB, amountA, uint(0))
+            : (tokenB, tokenA, uint(0), amountA);
+
+        _getUniswapPair(token0, token1).swap(amount0, amount1, address(this), abi.encodePacked(
+            protocolA,
+            protocolB,
+            amountB
+        ));
+    }
+
+    /**
      * @notice Repay an existing loan on a protocol
      * @param sender The loanee
      * @param protocol The protocol to use
