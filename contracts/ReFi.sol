@@ -88,6 +88,39 @@ contract ReFi is Ownable, ReentrancyGuard, IUniswapV2Callee {
     }
 
     /**
+     * @notice Refinance a loan
+     * @param fromProtocol The protocol for the current loan
+     * @param toProtocol The protocol for the new loan
+     * @param fromToken The token currently borrowed
+     * @param toToken The token that will be borrowed
+     */
+    function refinance(
+        Protocol fromProtocol,
+        Protocol toProtocol,
+        address fromToken,
+        address toToken
+    ) external onlyOwner nonReentrant {
+        uint fromAmount = _getBorrowBalance(fromProtocol, fromToken, msg.sender);
+        uint toAmount = _getEquivalentBorrowBalance(toProtocol, fromToken, toToken, fromAmount);
+
+        require(fromAmount > 0 && toAmount > 0, "ReFi/insufficient_borrow");
+
+        // solhint-disable-next-line no-empty-blocks
+        if (fromToken == toToken) {
+            // Use Aave flash loan
+        } else {
+            _uniswapFlashSwap(
+                fromProtocol,
+                toProtocol,
+                fromToken,
+                toToken,
+                fromAmount,
+                toAmount
+            );
+        }
+    }
+
+    /**
      * @notice Callback for the Uniswap flash swap
      * @notice Uses flash swap tokens to repay loan and borrow new loan with freed collateral
      * @param sender The original sender of the flash swap
