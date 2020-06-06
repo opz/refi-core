@@ -42,6 +42,7 @@ contract ReFi is Ownable {
     FixedPoint.uq112x112 private _AAVE_REPAY_EPSILON; // solhint-disable-line var-name-mixedcase
 
     IUniswapV2Router01 private _uniswapRouter;
+    AaveContracts private _aaveContracts;
 
     //----------------------------------------
     // Constructor
@@ -62,6 +63,23 @@ contract ReFi is Ownable {
      */
     function setUniswapRouter(IUniswapV2Router01 uniswapRouter) external onlyOwner {
         _uniswapRouter = uniswapRouter;
+    }
+
+    /**
+     * @notice Set the Aave contracts from the Aave `LendingPoolAddressesProvider` provider
+     * @param provider The Aave `LendingPoolAddressesProvider`
+     */
+    function setAaveContracts(ILendingPoolAddressesProvider provider)
+        external
+        onlyOwner
+        nonReentrant
+    {
+        _aaveContracts = AaveContracts(
+            provider,
+            ILendingPool(provider.getLendingPool()),
+            provider.getLendingPoolCore(),
+            IPriceOracle(provider.getPriceOracle())
+        );
     }
 
     //----------------------------------------
