@@ -4,9 +4,11 @@ import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import {FixedPoint} from "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
+import {IUniswapV2Callee} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Callee.sol";
 import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import {
     IUniswapV2Router01
@@ -16,7 +18,7 @@ import {ILendingPoolAddressesProvider} from "./aave-protocol/ILendingPoolAddress
 import {ILendingPool} from "./aave-protocol/ILendingPool.sol";
 import {IPriceOracle} from "./aave-protocol/IPriceOracle.sol";
 
-contract ReFi is Ownable {
+contract ReFi is Ownable, ReentrancyGuard, IUniswapV2Callee {
     //----------------------------------------
     // Type definitions
     //----------------------------------------
@@ -83,6 +85,53 @@ contract ReFi is Ownable {
             provider.getLendingPoolCore(),
             IPriceOracle(provider.getPriceOracle())
         );
+    }
+
+    /**
+     * @notice Callback for the Uniswap flash swap
+     * @notice Uses flash swap tokens to repay loan and borrow new loan with freed collateral
+     * @param sender The original sender of the flash swap
+     * @param amount0 The amount of token0 borrowed
+     * @param amount1 The amount of token1 borrowed
+     * @param data Additional parameters passed into the callback
+     */
+    function uniswapV2Call(
+        address sender,
+        uint amount0,
+        uint amount1,
+        bytes calldata data
+    ) external override nonReentrant {
+        // Get additional parameters
+        (
+            Protocol fromProtocol,
+            Protocol toProtocol,
+            uint borrowAmount
+        ) = abi.decode(data, (Protocol, Protocol, uint));
+
+        address token0 = IUniswapV2Pair(msg.sender).token0();
+        address token1 = IUniswapV2Pair(msg.sender).token1();
+
+        // Check which token we borrowed from the flash swap
+        (address repayToken, uint repayAmount, address borrowToken) = amount0 > amount1
+            ? (token0, amount0, token1)
+            : (token1, amount1, token0);
+
+        _repay(sender, fromProtocol, repayToken, repayAmount);
+
+        // If fromProtocol and toProtocol are different then withdraw collateral
+
+        // If fromProtocol and toProtocol are different then deposit collateral
+
+        _borrow(toProtocol, borrowToken, borrowAmount);
+
+        // Repay flash swap
+        address[] memory path = new address[](2);
+        path[0] = borrowToken;
+        path[1] = repayToken;
+        uint amountRequired = _uniswapRouter.getAmountsIn(repayAmount, path)[0];
+        require(amountRequired < borrowAmount, "ReFi/flash_incomplete");
+
+        IERC20(repayToken).safeTransfer(msg.sender, amountRequired);
     }
 
     //----------------------------------------
