@@ -7,6 +7,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {FixedPoint} from "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 
+import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import {
     IUniswapV2Router01
 } from "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol";
@@ -198,5 +199,24 @@ contract ReFi is Ownable {
             .decode144();
 
         return toBorrowBalance;
+    }
+
+    /**
+     * @notice Get the Uniswap pair for two sorted tokens
+     * @param token0 The first token in the pair
+     * @param token1 The second token in the pair
+     * @return The Uniswap pair
+     */
+    function _getUniswapPair(address token0, address token1)
+        internal
+        view
+        returns (IUniswapV2Pair)
+    {
+        return IUniswapV2Pair(address(uint(keccak256(abi.encodePacked(
+            hex"ff",
+            _uniswapRouter.factory(),
+            keccak256(abi.encodePacked(token0, token1)),
+            hex"96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f"
+        )))));
     }
 }
