@@ -24,6 +24,8 @@ contract ReFi is Ownable {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
+    enum Protocol { Aave }
+
     struct AaveContracts {
         ILendingPoolAddressesProvider provider;
         ILendingPool lendingPool;
@@ -105,6 +107,25 @@ contract ReFi is Ownable {
     //----------------------------------------
     // Internal views
     //----------------------------------------
+
+    /**
+     * @notice Get the current token borrow balance for a user on a protocol
+     * @param protocol The protocol to use
+     * @param token The token borrowed
+     * @param user The user
+     * @return balance The borrow balance
+     */
+    function _getBorrowBalance(Protocol protocol, address token, address user)
+        internal
+        view
+        returns (uint balance)
+    {
+        if (protocol == Protocol.Aave) {
+            balance = _getAaveBorrowBalance(token, user);
+        } else { // solhint-disable-line no-empty-blocks
+            // revert
+        }
+    }
 
     /**
      * @notice Get the current borrow balance of a reserve for a user on Aave
