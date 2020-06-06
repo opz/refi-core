@@ -105,6 +105,19 @@ contract ReFi is Ownable {
         _aaveContracts.lendingPool.repay(reserve, amount, payable(sender));
     }
 
+    /**
+     * @notice Borrow an amount of tokens from Aave
+     * @notice Assumes enough collateral to borrow the specified amount
+     * @param reserve The reserve to borrow from
+     * @param amount The amount of tokens to borrow
+     */
+    function _aaveBorrow(
+        address reserve,
+        uint amount
+    ) internal {
+        _aaveContracts.lendingPool.borrow(reserve, amount, 2, 0);
+    }
+
     //----------------------------------------
     // Internal views
     //----------------------------------------
