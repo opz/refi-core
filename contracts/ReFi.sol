@@ -102,6 +102,28 @@ contract ReFi is Ownable {
         _aaveContracts.lendingPool.repay(reserve, amount, payable(sender));
     }
 
+    //----------------------------------------
+    // Internal views
+    //----------------------------------------
+
+    /**
+     * @notice Get the current borrow balance of a reserve for a user on Aave
+     * @param reserve The Aave reserve
+     * @param user The user
+     * @return The borrow balance
+     */
+    function _getAaveBorrowBalance(address reserve, address user)
+        internal
+        view
+        returns (uint)
+    {
+        (, uint currentBorrowBalance, , , , , , , ,) =
+            _aaveContracts.lendingPool.getUserReserveData(reserve, user);
+        require(currentBorrowBalance <= _MAX_UINT112, "ReFi/overflow");
+
+        return currentBorrowBalance;
+    }
+
     /**
      * @notice Get the equivalent borrow balance for another Aave reserve
      * @param fromReserve The reserve with the current balance
