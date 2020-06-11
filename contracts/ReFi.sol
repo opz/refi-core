@@ -211,8 +211,8 @@ contract ReFi is Ownable, ReentrancyGuard, IUniswapV2Callee {
     function _repay(address sender, Protocol protocol, address token, uint amount) internal {
         if (protocol == Protocol.Aave) {
             _aaveRepay(sender, token, amount);
-        } else { // solhint-disable-line no-empty-blocks
-            // revert
+        } else {
+            revert("ReFi/unknown_protocol");
         }
     }
 
@@ -225,8 +225,8 @@ contract ReFi is Ownable, ReentrancyGuard, IUniswapV2Callee {
     function _borrow(Protocol protocol, address token, uint amount) internal {
         if (protocol == Protocol.Aave) {
             _aaveBorrow(token, amount);
-        } else { // solhint-disable-line no-empty-blocks
-            // revert
+        } else {
+            revert("ReFi/unknown_protocol");
         }
     }
 
@@ -280,8 +280,8 @@ contract ReFi is Ownable, ReentrancyGuard, IUniswapV2Callee {
     {
         if (protocol == Protocol.Aave) {
             balance = _getAaveBorrowBalance(token, user);
-        } else { // solhint-disable-line no-empty-blocks
-            // revert
+        } else {
+            revert("ReFi/unknown_protocol");
         }
     }
 
@@ -305,8 +305,8 @@ contract ReFi is Ownable, ReentrancyGuard, IUniswapV2Callee {
     {
         if (protocol == Protocol.Aave) {
             toBalance = _getAaveEquivalentBorrowBalance(fromToken, toToken, fromBalance);
-        } else { // solhint-disable-line no-empty-blocks
-            // revert
+        } else {
+            revert("ReFi/unknown_protocol");
         }
     }
 
