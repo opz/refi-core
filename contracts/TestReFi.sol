@@ -5,6 +5,18 @@ import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pa
 import {ReFi} from "./ReFi.sol";
 
 contract TestReFi is ReFi {
+    function getAaveEquivalentBorrowBalance(
+        address fromReserve,
+        address toReserve,
+        uint currentBorrowBalance
+    )
+        external
+        view
+        returns (uint)
+    {
+        return _getAaveEquivalentBorrowBalance(fromReserve, toReserve, currentBorrowBalance);
+    }
+
     function getUniswapPair(address token0, address token1)
         external
         view
