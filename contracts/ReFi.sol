@@ -27,7 +27,8 @@ contract ReFi is Ownable, ReentrancyGuard, IUniswapV2Callee {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
-    enum Protocol { Aave }
+    // Unknown protocol is used for testing
+    enum Protocol { Unknown, Aave }
 
     struct AaveContracts {
         ILendingPoolAddressesProvider provider;

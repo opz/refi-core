@@ -3,12 +3,9 @@ const { constants, utils } = require("ethers");
 const { createFixtureLoader } = require("ethereum-waffle");
 const { deployMockContract } = require("@ethereum-waffle/mock-contract");
 
-const { refiFixture } = require("./fixtures");
+const { refiFixture, mockAaveFixture } = require("./fixtures");
 
 const UniswapV2Router01 = require("@uniswap/v2-periphery/build/UniswapV2Router01.json");
-const LendingPoolAddressesProvider = require("../artifacts/ILendingPoolAddressesProvider.json");
-const LendingPool = require("../artifacts/ILendingPool.json");
-const PriceOracle = require("../artifacts/IPriceOracle.json");
 
 describe("ReFi", () => {
   const provider = waffle.provider;
@@ -21,45 +18,58 @@ describe("ReFi", () => {
     ({ refi } = await loadFixture(refiFixture));
   });
 
-  describe("Aave functions", () => {
-    const daiAddr = utils.getAddress("0x6b175474e89094c44da98b954eedeac495271d0f");
-    const wethAddr = utils.getAddress("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2");
+  describe("All protocol functions", () => {
+    const protocolUnknown = 0;
+    const protocolAave = 1;
 
-    let lendingPool;
-    let priceOracle
-    let provider;
+    let daiAddr;
+    let wethAddr;
 
     beforeEach(async () => {
-      lendingPool = await deployMockContract(wallet, LendingPool.abi);
-      priceOracle = await deployMockContract(wallet, PriceOracle.abi);
-      provider = await deployMockContract(wallet, LendingPoolAddressesProvider.abi);
-      await provider.mock.getLendingPool.returns(lendingPool.address);
-      await provider.mock.getLendingPoolCore.returns(constants.AddressZero);
-      await provider.mock.getPriceOracle.returns(priceOracle.address);
+      ({ daiAddr, wethAddr } = await loadFixture(mockAaveFixture(refi)));
+    });
 
-      await refi.setAaveContracts(provider.address);
+    describe("_getEquivalentBorrowBalance", () => {
+      const borrowBalance = utils.parseEther("200");
+
+      it("should get the equivalent borrow balance for Aave", async () => {
+        const equivalentBorrowBalance = await refi.getEquivalentBorrowBalance(
+          protocolAave,
+          daiAddr,
+          wethAddr,
+          borrowBalance
+        );
+        expect(equivalentBorrowBalance).to.eq(utils.parseEther("1"));
+      });
+
+      it("should revert if passed an unknown protocol", async () => {
+        const promise = refi.getEquivalentBorrowBalance(
+          protocolUnknown,
+          daiAddr,
+          wethAddr,
+          borrowBalance
+        );
+        await expect(promise).to.be.revertedWith("ReFi/unknown_protocol");
+      });
+    });
+  });
+
+  describe("Aave functions", () => {
+    let daiAddr;
+    let wethAddr;
+
+    beforeEach(async () => {
+      ({ daiAddr, wethAddr } = await loadFixture(mockAaveFixture(refi)));
     });
 
     describe("_getAaveBorrowBalance", () => {
-      const borrowBalance = utils.parseEther("1");
-      beforeEach(async () => {
-        await lendingPool
-          .mock
-          .getUserReserveData
-          .returns(0, borrowBalance, 0, 0, 0, 0, 0, 0, 0, 0);
-      });
-
       it("should get the borrow balance of a user for a reserve", async () => {
+        const borrowBalance = utils.parseEther("1");
         expect(await refi.getAaveBorrowBalance(daiAddr, wallet.address)).to.eq(borrowBalance);
       });
     });
 
     describe("_getAaveEquivalentBorrowBalance", () => {
-      beforeEach(async () => {
-        await priceOracle.mock.getAssetPrice.withArgs(daiAddr).returns(utils.parseEther("1"));
-        await priceOracle.mock.getAssetPrice.withArgs(wethAddr).returns(utils.parseEther("200"));
-      });
-
       it("should get the equivalent borrow balance of another reserve", async () => {
         const currentBorrowBalance = utils.parseEther("200");
         const equivalentBalance = await refi.getAaveEquivalentBorrowBalance(

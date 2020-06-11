@@ -1,5 +1,6 @@
-const { Contract, utils } = require("ethers");
+const { Contract, constants, utils } = require("ethers");
 const { deployContract } = require("ethereum-waffle");
+const { deployMockContract } = require("@ethereum-waffle/mock-contract");
 
 const UniswapV2Factory = require("@uniswap/v2-core/build/UniswapV2Factory.json");
 const IUniswapV2Pair = require("@uniswap/v2-core/build/IUniswapV2Pair.json");
@@ -7,6 +8,10 @@ const IUniswapV2Pair = require("@uniswap/v2-core/build/IUniswapV2Pair.json");
 const ERC20 = require("@uniswap/v2-periphery/build/ERC20.json");
 const WETH9 = require("@uniswap/v2-periphery/build/WETH9.json");
 const UniswapV2Router01 = require("@uniswap/v2-periphery/build/UniswapV2Router01.json");
+
+const LendingPoolAddressesProvider = require("../artifacts/ILendingPoolAddressesProvider.json");
+const LendingPool = require("../artifacts/ILendingPool.json");
+const PriceOracle = require("../artifacts/IPriceOracle.json");
 
 const ReFi = require("../artifacts/TestReFi.json");
 
@@ -85,7 +90,36 @@ async function refiFixture(provider, [wallet]) {
   return { ...fixture, refi };
 }
 
+function mockAaveFixture(refi) {
+  return async (provider, [wallet]) => {
+    const lendingPool = await deployMockContract(wallet, LendingPool.abi);
+    const borrowBalance = utils.parseEther("1");
+    await lendingPool
+      .mock
+      .getUserReserveData
+      .returns(0, borrowBalance, 0, 0, 0, 0, 0, 0, 0, 0);
+
+    const priceOracle = await deployMockContract(wallet, PriceOracle.abi);
+
+    const daiAddr = utils.getAddress("0x6b175474e89094c44da98b954eedeac495271d0f");
+    await priceOracle.mock.getAssetPrice.withArgs(daiAddr).returns(utils.parseEther("1"));
+
+    const wethAddr = utils.getAddress("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2");
+    await priceOracle.mock.getAssetPrice.withArgs(wethAddr).returns(utils.parseEther("200"));
+
+    const lendingPoolProvider = await deployMockContract(wallet, LendingPoolAddressesProvider.abi);
+    await lendingPoolProvider.mock.getLendingPool.returns(lendingPool.address);
+    await lendingPoolProvider.mock.getLendingPoolCore.returns(constants.AddressZero);
+    await lendingPoolProvider.mock.getPriceOracle.returns(priceOracle.address);
+
+    await refi.setAaveContracts(lendingPoolProvider.address);
+
+    return { daiAddr, wethAddr };
+  }
+}
+
 module.exports = {
   uniswapFixture,
-  refiFixture
+  refiFixture,
+  mockAaveFixture
 };
